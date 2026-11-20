@@ -72,6 +72,24 @@ scripts/testing/run-contract-tests.sh coverage   # lcov + summary (cargo-llvm-co
 
 See [stellar-lend/TESTING.md](stellar-lend/TESTING.md) for fixtures, seeding, scenarios and CI.
 
+### Typed Scenarios, Rebalance Schedules and Storage Audits
+
+The repository ships three small focused tools:
+
+- `scenarios/` is a typed TypeScript DSL. `defineScenario`, `parseScenario`,
+  `validateScenario` and `runScenario` replace ad-hoc scripts; bundled
+  historical JSON scenarios are loaded through `loadBundledScenarios()`.
+  Run its tests with `node --experimental-strip-types --test scenarios/scenarios.test.ts`.
+- `bots/rebalance/rebalance.schedule.json` is the single declarative schedule
+  for treasury and pool rebalancing. `bots/rebalance/` exposes typed validation
+  and job construction, while `api/src/jobs/rebalance.job.ts` executes the same
+  definitions inside the API and exposes them as BullMQ-compatible queues.
+  Run its tests with
+  `node --experimental-strip-types --test bots/rebalance/src/__tests__/rebalance.test.ts`.
+- `stellar-lend/packages/storage-audit/` is a shared `no_std` crate for
+  auditing Soroban storage layouts against the rules in `docs/storage.md`.
+  Run its tests with `cargo test -p stellarlend-storage-audit`.
+
 ### Running Local CI Checks
 
 To reproduce CI checks locally before pushing:

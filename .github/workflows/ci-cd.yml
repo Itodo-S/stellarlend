@@ -110,6 +110,24 @@ jobs:
           cargo install cargo-audit --locked
           cargo audit
 
+  wave-tooling:
+    name: Wave tooling — typed scenarios and declarative schedules
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Test typed scenario DSL
+        run: node --experimental-strip-types --test scenarios/scenarios.test.ts
+
+      - name: Test declarative rebalance schedule
+        run: node --experimental-strip-types --test bots/rebalance/src/__tests__/rebalance.test.ts
+
   fuzzing:
     name: Contracts — Fuzz (Smoke)
     runs-on: ubuntu-latest

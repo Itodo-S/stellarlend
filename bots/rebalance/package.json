@@ -1,0 +1,15 @@
+{
+  "name": "rebalance-bot",
+  "version": "1.0.0",
+  "description": "Declaratively scheduled treasury and pool rebalancing jobs for StellarLend",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test src/__tests__/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.10.5",
+    "typescript": "^5.9.3"
+  }
+}
