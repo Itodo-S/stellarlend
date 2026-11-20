@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "schedules": [
+    {
+      "name": "treasury-daily",
+      "enabled": true,
+      "cron": "0 0 * * *",
+      "timezone": "UTC",
+      "deviationThresholdPercent": 5,
+      "slippageTolerancePercent": 0.3,
+      "dryRun": false,
+      "targetQueue": "rebalance-treasury"
+    },
+    {
+      "name": "pool-weekly",
+      "enabled": true,
+      "cron": "0 0 * * 0",
+      "timezone": "UTC",
+      "deviationThresholdPercent": 1,
+      "slippageTolerancePercent": 0.3,
+      "dryRun": false,
+      "targetQueue": "rebalance-pools"
+    }
+  ]
+}

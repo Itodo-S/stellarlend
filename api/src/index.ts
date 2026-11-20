@@ -8,6 +8,7 @@ import { createCollateralRatioWebSocket } from './ws/collateralRatioWebSocket';
 import { SubscriptionService } from './services/subscription.service';
 import { startRiskEngineScheduler } from './services/risk-engine';
 import { startPoolSnapshotCron } from './jobs/poolSnapshot.job';
+import { startRebalanceCron, stopRebalanceCron } from './jobs/rebalance.job';
 import { startEventIndexerFromEnv } from './services/eventIndex';
 import { startLiquidationWarnings } from './services/notification-engine/liquidationWarnings';
 
@@ -27,6 +28,7 @@ subscriptionService.startKeeper();
 // Start risk engine hourly recalculation scheduler
 startRiskEngineScheduler();
 startPoolSnapshotCron();
+startRebalanceCron();
 
 // Contract event indexer (#685) — polls Soroban RPC when EVENT_INDEXER_ENABLED=true
 startEventIndexerFromEnv();
@@ -53,6 +55,7 @@ process.on('uncaughtException', (error) => {
 
 const shutdown = (signal: string) => {
   logger.info(`${signal} received, shutting down gracefully`);
+  stopRebalanceCron();
   server.close(() => {
     logger.info('Server closed, all in-flight requests completed');
     process.exit(0);
