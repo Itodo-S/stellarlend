@@ -1,6 +1,8 @@
 #![allow(unused)]
 use soroban_sdk::{contracterror, contracttype, Address, Env, IntoVal, Symbol, Val, Vec};
 
+use crate::liq_math;
+
 /// Errors that can occur during risk parameter management
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -350,13 +352,8 @@ pub fn get_liquidation_incentive(env: &Env) -> Result<i128, RiskParamsError> {
 /// Maximum amount that can be liquidated
 pub fn get_max_liquidatable_amount(env: &Env, debt_value: i128) -> Result<i128, RiskParamsError> {
     let config = get_risk_params(env).ok_or(RiskParamsError::InvalidParameter)?;
-
-    // Calculate: debt * close_factor / BASIS_POINTS_SCALE
-    let max_amount = (debt_value * config.close_factor)
-        .checked_div(BASIS_POINTS_SCALE)
-        .ok_or(RiskParamsError::InvalidParameter)?; // Return generic error for overflow since we dropped Overflow variant
-
-    Ok(max_amount)
+    liq_math::max_liquidatable(debt_value, config.close_factor)
+        .map_err(|_| RiskParamsError::InvalidParameter)
 }
 
 /// Calculate liquidation incentive amount
@@ -374,13 +371,8 @@ pub fn get_liquidation_incentive_amount(
     liquidated_amount: i128,
 ) -> Result<i128, RiskParamsError> {
     let config = get_risk_params(env).ok_or(RiskParamsError::InvalidParameter)?;
-
-    // Calculate: amount * liquidation_incentive / BASIS_POINTS_SCALE
-    let incentive = (liquidated_amount * config.liquidation_incentive)
-        .checked_div(BASIS_POINTS_SCALE)
-        .ok_or(RiskParamsError::InvalidParameter)?;
-
-    Ok(incentive)
+    liq_math::incentive_amount(liquidated_amount, config.liquidation_incentive)
+        .map_err(|_| RiskParamsError::InvalidParameter)
 }
 
 /// Require minimum collateral ratio
@@ -390,20 +382,18 @@ pub fn require_min_collateral_ratio(
     debt_value: i128,
 ) -> Result<(), RiskParamsError> {
     let config = get_risk_params(env).ok_or(RiskParamsError::InvalidParameter)?;
+    let satisfies = liq_math::meets_min_collateral_ratio(
+        collateral_value,
+        debt_value,
+        config.min_collateral_ratio,
+    )
+    .map_err(|_| RiskParamsError::InvalidParameter)?;
 
-    if debt_value == 0 {
-        return Ok(());
+    if satisfies {
+        Ok(())
+    } else {
+        Err(RiskParamsError::InvalidCollateralRatio)
     }
-
-    let ratio = (collateral_value * BASIS_POINTS_SCALE)
-        .checked_div(debt_value)
-        .ok_or(RiskParamsError::InvalidParameter)?;
-
-    if ratio < config.min_collateral_ratio {
-        return Err(RiskParamsError::InvalidCollateralRatio);
-    }
-
-    Ok(())
 }
 
 /// Can be liquidated check
@@ -413,14 +403,6 @@ pub fn can_be_liquidated(
     debt_value: i128,
 ) -> Result<bool, RiskParamsError> {
     let config = get_risk_params(env).ok_or(RiskParamsError::InvalidParameter)?;
-
-    if debt_value == 0 {
-        return Ok(false);
-    }
-
-    let ratio = (collateral_value * BASIS_POINTS_SCALE)
-        .checked_div(debt_value)
-        .ok_or(RiskParamsError::InvalidParameter)?;
-
-    Ok(ratio < config.liquidation_threshold)
+    liq_math::is_liquidatable(collateral_value, debt_value, config.liquidation_threshold)
+        .map_err(|_| RiskParamsError::InvalidParameter)
 }

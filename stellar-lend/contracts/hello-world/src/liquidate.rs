@@ -29,8 +29,7 @@ use soroban_sdk::{contracterror, contracttype, Address, Env, IntoVal, Map, Symbo
 use stellarlend_math::checked::apply_bps;
 use stellarlend_math::liquidation::{
     collateral_value_in_debt as math_collateral_value_in_debt,
-    debt_value_in_collateral as math_debt_value_in_collateral,
-    dynamic_penalty_bps as math_dynamic_penalty_bps, is_profitable as math_is_profitable,
+    debt_value_in_collateral as math_debt_value_in_collateral, is_profitable as math_is_profitable,
     priority_score as math_priority_score, seize_amount as math_seize_amount,
 };
 use stellarlend_math::MathError;
@@ -53,7 +52,7 @@ use crate::risk_params::{
 ///
 /// Re-exported from the shared math library so the cap enforced here and the cap
 /// enforced inside [`stellarlend_math::liquidation`] can never diverge.
-pub use stellarlend_math::liquidation::MAX_PENALTY_BPS;
+pub use crate::liq_math::MAX_PENALTY_BPS;
 
 /// Maps a [`MathError`] from the shared math library onto this module's errors.
 fn map_math_error(err: MathError) -> LiquidationError {
@@ -112,7 +111,7 @@ pub fn calculate_dynamic_penalty(
     total_debt: i128,
 ) -> Result<i128, LiquidationError> {
     let params = get_risk_params(env).ok_or(LiquidationError::Overflow)?;
-    math_dynamic_penalty_bps(
+    crate::liq_math::dynamic_penalty_bps(
         collateral_value,
         total_debt,
         params.liquidation_incentive,

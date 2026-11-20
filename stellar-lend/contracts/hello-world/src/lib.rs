@@ -25,6 +25,7 @@ pub mod deposit;
 pub mod emergency_withdrawal;
 pub mod flash_loan;
 pub mod interest_rate;
+pub mod liq_math;
 pub mod liquidate;
 pub mod mev_protection;
 pub mod rate_limiter;
